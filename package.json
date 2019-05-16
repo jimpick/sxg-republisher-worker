@@ -1,0 +1,17 @@
+{
+  "name": "sxg-republisher-worker",
+  "version": "1.0.1",
+  "description": "For demo",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Jim Pick (@jimpick)",
+  "license": "MIT",
+  "dependencies": {
+    "aws-sdk": "^2.456.0",
+    "delay": "^4.2.0",
+    "dotenv": "^8.0.0"
+  }
+}
