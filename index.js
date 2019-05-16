@@ -20,13 +20,27 @@ async function run () {
   */
 
   const user = 'jimpick'
-  const siteName = 'test'
-  const cid = '1234567890ab'
+  const siteName = 'ipfs-docs'
+  const cid = 'QmXSHCEUJfFhGvw6U1aSuMtSTSnCmWcwvnCHdSZwbfRyer'
+  const sxgCid = 'Qma2smSLfpgsTk3sJhA7oukLCk4wXDYy9UpyTTCyWLYaeU'
   const startTime = Date.now()
   const upsert = (await route53.changeResourceRecordSets({
     HostedZoneId: zoneId,
     ChangeBatch: {
       Changes: [
+        {
+          Action: 'UPSERT',
+          ResourceRecordSet: {
+            Name: `${siteName}-${user}.ipfs.v6z.me.`,
+            Type: 'A',
+            TTL: 60,
+            ResourceRecords: [
+              {
+                Value: '64.46.28.178'
+              }
+            ]
+          }
+        },
         {
           Action: 'UPSERT',
           ResourceRecordSet: {
@@ -36,6 +50,32 @@ async function run () {
             ResourceRecords: [
               {
                 Value: `"dnslink=/ipfs/${cid}"`
+              }
+            ]
+          }
+        },
+        {
+          Action: 'UPSERT',
+          ResourceRecordSet: {
+            Name: `sxg.${siteName}-${user}.ipfs.v6z.me.`,
+            Type: 'A',
+            TTL: 60,
+            ResourceRecords: [
+              {
+                Value: '64.46.28.178'
+              }
+            ]
+          }
+        },
+        {
+          Action: 'UPSERT',
+          ResourceRecordSet: {
+            Name: `_dnslink.sxg.${siteName}-${user}.ipfs.v6z.me.`,
+            Type: 'TXT',
+            TTL: 60,
+            ResourceRecords: [
+              {
+                Value: `"dnslink=/ipfs/${sxgCid}"`
               }
             ]
           }
