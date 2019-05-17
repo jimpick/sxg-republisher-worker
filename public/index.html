@@ -1,0 +1,36 @@
+<html>
+  <head>
+    <title>SXG Demo</title>
+  </head>
+  <body>
+    <h1>SXG Publisher Demo</h1>
+    <form>
+      <label for="githubUser">GitHub user:</label>
+      <select id="githubUser">
+        <option value="">-- Log in to GitHub --</option>
+        <option value="jimpick">jimpick</option>
+        <option value="autonome">autonome</option>
+        <option value="lidel">lidel</option>
+      </select>
+      <br>
+
+      <label for="siteName">Site name:</label>
+      <input type="text" id="siteName" size="40">
+      <br>
+
+      <label for="ipfsCid">IPFS CID:</label>
+      <input type="text" id="ipfsCid" size="80">
+      <br>
+      <br>
+      <div id="preview"></div>
+      <br>
+      <br>
+      <button disabled id="publish">Publish</button>
+      <br>
+      <br>
+      <div id="result"></div>
+    </form>
+    <script src="index.js"></script>
+  </body>
+</html>
+
