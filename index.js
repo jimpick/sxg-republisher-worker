@@ -3,6 +3,30 @@ const delay = require('delay')
 
 require('dotenv').config()
 
+const user = 'jimpick'
+
+/*
+const siteName = 'ipfs-docs'
+const cid = 'QmXSHCEUJfFhGvw6U1aSuMtSTSnCmWcwvnCHdSZwbfRyer'
+const sxgCid = 'QmdPdTbK9QPHeaE35Yr1GK4VgGUw1uZMMrWKUyKvNaUWRh'
+*/
+
+/*
+const siteName = 'index'
+const cid = 'QmaESbPUk9ifYSiTgjXizp4DahbfpFGKKFyj5WGDuJyG8W'
+const sxgCid = 'QmbVhJMtwrHsDRoPLJ4iFjBzEXu5MjwMp7xL8xk6WZoagQ'
+*/
+
+/*
+const siteName = 'ipld'
+const cid = 'QmXb2bKQdgNhC7vaiKQgXFtt7daUZD382L54UTTNXnwQTD'
+const sxgCid = 'QmWJRvdr8wBMJG9Sy7EDVeDmKo75CjR8tC42NBxkVncv7q'
+*/
+
+const siteName = 'peerpad'
+const cid = 'QmWbsqqqG9YpNYDt5afp6HY8TrKMtCtdGUtUfgkS9fRYeH'
+const sxgCid = 'QmWpk6WgMzA7Bmw3zpijgcxvp42qPqskWYZbdbSwFAoVcg'
+
 async function run () {
   const route53 = new AWS.Route53({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -19,10 +43,6 @@ async function run () {
   console.log('records', JSON.stringify(records, null, 2))
   */
 
-  const user = 'jimpick'
-  const siteName = 'ipfs-docs'
-  const cid = 'QmXSHCEUJfFhGvw6U1aSuMtSTSnCmWcwvnCHdSZwbfRyer'
-  const sxgCid = 'Qma2smSLfpgsTk3sJhA7oukLCk4wXDYy9UpyTTCyWLYaeU'
   const startTime = Date.now()
   const upsert = (await route53.changeResourceRecordSets({
     HostedZoneId: zoneId,
