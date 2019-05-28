@@ -4,7 +4,9 @@ const delay = require('delay')
 
 require('dotenv').config()
 
-const fastify = require('fastify')({ logger: true })
+// const fastify = require('fastify')({ logger: true })
+const fastify = require('fastify')()
+
 fastify.register(require('fastify-static'), {
   root: path.join(__dirname, 'public')
 })
