@@ -1,3 +1,79 @@
+import { html, render } from 'https://unpkg.com/lit-html?module'
+
+const mainTemplate = ({ user, error }) => {
+  const header = html`
+    <h1>SXG IPFS Publisher Demo</h1>
+  `
+  if (error) {
+    return html`
+      ${header}
+      <pre>Error: ${error}</pre>
+    `
+  }
+  if (!user) {
+    return html`
+      ${header}
+      Loading...
+    `
+  }
+  if (!user.login) {
+    return html`
+      ${header}
+      <button @click=${login}>Login using GitHub</button>
+    `
+
+    function login () {
+      location.href = '/login'
+    }
+  }
+  return html`
+    ${header}
+    <p>Hello ${user.login}</p>
+    <div>
+      <img class="avatar" src="${user.avatar_url}">
+    </div>
+    <button @click=${logout}>Logout</button>
+  `
+
+}
+
+let user
+let error
+
+function r () {
+  render(mainTemplate({ user }), document.body)
+}
+
+async function logout () {
+  console.log('Logout')
+  try {
+    const res = await fetch('/logout', { method: 'POST' })
+    user = await res.json()
+    r()
+  } catch (e) {
+    console.error('Error logging out', e)
+    error = 'Error logging out'
+    r()
+  }
+}
+
+async function run () {
+  r()
+  try {
+    const res = await fetch('/user')
+    user = await res.json()
+    r()
+  } catch (e) {
+    console.error('Error loading user', e)
+    error = 'Error loading user'
+    r()
+  }
+}
+
+run()
+
+
+/*
 const publishBtn = document.getElementById('publish')
 const userEle = document.getElementById('githubUser')
 const nameEle = document.getElementById('siteName')
@@ -43,3 +119,4 @@ publishBtn.addEventListener('click', async (e) => {
     resultEle.textContent = 'Publish failed'
   }
 })
+*/

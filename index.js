@@ -55,7 +55,8 @@ fastify.get('/login/github/callback', async function (request, reply) {
   const { login, avatar_url } = user.data
   console.log('Login:', login)
   request.session.set('github_user', { login, avatar_url })
-  reply.send(`logged in as ${login}`)
+  // reply.send(`logged in as ${login}`)
+  reply.redirect('/')
 })
 
 fastify.get('/user', async function (request, reply) {
@@ -67,7 +68,7 @@ fastify.get('/user', async function (request, reply) {
   reply.send(user)
 })
 
-fastify.get('/logout', async function (request, reply) {
+fastify.post('/logout', async function (request, reply) {
   /* Doesn't work
   const accessToken = this.githubOAuth.accessToken.create({
     access_token: request.session.get('github_access_token')
@@ -75,9 +76,10 @@ fastify.get('/logout', async function (request, reply) {
   await accessToken.revoke('access_token')
   */
   request.session.delete()
-  reply.send('logged out')
+  reply.send({ loggedOut: true })
 })
 
+/*
 fastify.get('/show-auth', async function (request, reply) {
   const auth = request.session.get('github_access_token') 
   console.log('Get token: ', auth)
@@ -88,6 +90,7 @@ fastify.get('/show-auth', async function (request, reply) {
     user
   })
 })
+*/
 
 fastify.listen(13023, (err, address) => {
   if (err) throw err
