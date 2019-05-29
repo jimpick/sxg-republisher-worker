@@ -5,8 +5,11 @@ const Octokit = require('@octokit/rest')
 
 require('dotenv').config()
 
-// const fastify = require('fastify')({ logger: true })
-const fastify = require('fastify')()
+const origin = process.env.ORIGIN ? process.env.ORIGIN :
+  'http://localhost:13023'
+const fastify = require('fastify')({ logger: true })
+// console.log('Jim env', process.env)
+// const fastify = require('fastify')()
 
 fastify.register(require('fastify-static'), {
   root: path.join(__dirname, 'public')
@@ -26,7 +29,7 @@ fastify.register(oauthPlugin, {
   // register a fastify url to start the redirect flow
   startRedirectPath: '/login',
   // facebook redirect here after the user login
-  callbackUri: 'http://localhost:13023/login/github/callback'
+  callbackUri: `${origin}/login/github/callback`
 })
 
 fastify.register(require('fastify-secure-session'), {
@@ -92,7 +95,9 @@ fastify.get('/show-auth', async function (request, reply) {
 })
 */
 
-fastify.listen(13023, (err, address) => {
+const port = process.env.PORT || 13023
+fastify.listen(port, '0.0.0.0', (err, address) => {
+  console.log(`server listening on ${address}`)
   if (err) throw err
   fastify.log.info(`server listening on ${address}`)
 })
