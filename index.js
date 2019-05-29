@@ -3,6 +3,7 @@ const { Readable } = require('stream')
 const AWS = require('aws-sdk')
 const delay = require('delay')
 const Octokit = require('@octokit/rest')
+const signer = require('./signer')
 
 require('dotenv').config()
 
