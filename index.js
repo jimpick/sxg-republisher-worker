@@ -20,6 +20,8 @@ const gitHubCredentials = {
   id: process.env.GITHUB_OAUTH_CLIENT_ID,
   secret: process.env.GITHUB_OAUTH_CLIENT_SECRET
 }
+const callbackUri = `${origin}/login/github/callback`.trim()
+console.log('callbackUri:', callbackUri)
 fastify.register(oauthPlugin, {
   name: 'githubOAuth',
   credentials: {
