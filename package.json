@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "build-docker": "docker build -t jimpick/sxg-publisher .",
-    "run-docker": "docker run -p 13023:80 --env-file .env --name sxgpub -d jimpick/sxg-publisher",
+    "run-docker": "docker run -p 13023:8080 --env-file .env --name sxgpub -d jimpick/sxg-publisher",
     "gcloud-build": "gcloud builds submit --tag gcr.io/sxg-publisher/sxg-publisher"
   },
   "keywords": [],

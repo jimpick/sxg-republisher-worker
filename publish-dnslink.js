@@ -9,24 +9,24 @@ const user = 'jimpick'
 /*
 const siteName = 'index'
 const cid = 'QmaESbPUk9ifYSiTgjXizp4DahbfpFGKKFyj5WGDuJyG8W'
-const sxgCid = 'QmfQJKofk5WMjDWH7xfoTcD9sx2jsA82GLSJYt9avFUikB'
+const sxgCid = 'QmbjzfWagtGAeNeiM1msmxhLK5oEgY7VHLsNfQiwKmufxx'
 */
 
 /*
 const siteName = 'ipfs-docs'
-const cid = 'QmXSHCEUJfFhGvw6U1aSuMtSTSnCmWcwvnCHdSZwbfRyer'
-const sxgCid = 'QmSq6QrpVhJqvENrSUk93pB28UcrDthx4j9udn6k5yyb3u'
+const cid = 'QmQnTyd54imxXb9oC49ujk7HnJJt9dfctmRhUxz1XoM3om'
+const sxgCid = 'Qmct2SvuWTjmUsSP3djgCNDafDnMRTJxQ6qef1R8LwYAos'
 */
 
 /*
 const siteName = 'ipld'
 const cid = 'QmXb2bKQdgNhC7vaiKQgXFtt7daUZD382L54UTTNXnwQTD'
-const sxgCid = 'QmXu6uJMVaUvnwshgFsFkXG3QrLCndnVtExggoNrdrvEWV'
+const sxgCid = 'Qme6j9Q2w74U9JqYHPMyge54jJc6ffM8P3uG8ZtTcsLeAk'
 */
 
 const siteName = 'peerpad'
 const cid = 'QmWbsqqqG9YpNYDt5afp6HY8TrKMtCtdGUtUfgkS9fRYeH'
-const sxgCid = 'Qma5R85cb6YPDdssoUeZctH8mtfpRCm8GDud3ii3YLRcZb'
+const sxgCid = 'QmXqRHSzn4moGLu831DXLaoVHyeY5BE9FP1fL939yrVfsp'
 
 async function run () {
   const route53 = new AWS.Route53({
