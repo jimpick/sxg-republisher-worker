@@ -32,6 +32,9 @@ const mainTemplate = ({ user, error }) => {
     <div>
       <img class="avatar" src="${user.avatar_url}">
     </div>
+    <ul>
+      <li><a href="/do-work">Do work</a></li>
+    </ul>
     <button @click=${logout}>Logout</button>
   `
 

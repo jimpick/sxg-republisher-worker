@@ -21,5 +21,8 @@
     "fastify-oauth2": "^2.0.0",
     "fastify-secure-session": "^1.1.1",
     "fastify-static": "^2.4.0"
+  },
+  "devDependencies": {
+    "nodemon": "^1.19.1"
   }
 }

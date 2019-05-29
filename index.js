@@ -1,4 +1,5 @@
 const path = require('path')
+const { Readable } = require('stream')
 const AWS = require('aws-sdk')
 const delay = require('delay')
 const Octokit = require('@octokit/rest')
@@ -8,8 +9,6 @@ require('dotenv').config()
 const origin = process.env.ORIGIN ? process.env.ORIGIN :
   'http://localhost:13023'
 const fastify = require('fastify')({ logger: true })
-// console.log('Jim env', process.env)
-// const fastify = require('fastify')()
 
 fastify.register(require('fastify-static'), {
   root: path.join(__dirname, 'public')
@@ -97,10 +96,24 @@ fastify.get('/show-auth', async function (request, reply) {
 })
 */
 
+fastify.get('/do-work', function (request, reply) {
+  const stream = new Readable({ read() {} })
+  reply.type('text/html; charset=UTF-8').send(stream)
+  count()
+
+  async function count () {
+    for (let i = 1; i <= 10; i++) {
+      stream.push(`Line ${i}<br>\n`)
+      await delay(1000)
+    }
+    stream.push('Done.\n')
+    stream.push(null)
+  }
+})
+
 const port = process.env.PORT || 13023
 fastify.listen(port, '0.0.0.0', (err, address) => {
   console.log(`server listening on ${address}`)
   if (err) throw err
   fastify.log.info(`server listening on ${address}`)
 })
-
