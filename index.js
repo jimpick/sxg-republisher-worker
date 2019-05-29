@@ -1,7 +1,6 @@
 const path = require('path')
 const AWS = require('aws-sdk')
 const delay = require('delay')
-const oauthPlugin = require('fastify-oauth2')
 
 require('dotenv').config()
 
@@ -12,8 +11,8 @@ fastify.register(require('fastify-static'), {
   root: path.join(__dirname, 'public')
 })
 
+const oauthPlugin = require('fastify-oauth2')
 fastify.register(oauthPlugin, {
-  // FIXME: GitHub
   name: 'githubOAuth2',
   credentials: {
     client: {
@@ -23,9 +22,19 @@ fastify.register(oauthPlugin, {
     auth: oauthPlugin.GITHUB_CONFIGURATION
   },
   // register a fastify url to start the redirect flow
-  startRedirectPath: '/login/github',
+  startRedirectPath: '/login',
   // facebook redirect here after the user login
   callbackUri: 'http://localhost:13023/login/github/callback'
+})
+
+fastify.register(require('fastify-secure-session'), {
+  secret: process.env.SESSION_SECRET,
+  salt: process.env.SESSION_SALT,
+  cookie: {
+    // options from setCookie, see https://github.com/fastify/fastify-cookie
+    path: '/',
+    maxAge: 4 * 7 * 24 * 60 * 60 // 4 weeks
+  }
 })
 
 fastify.post('/api/publish', (req, reply) => {
@@ -38,7 +47,22 @@ fastify.get('/login/github/callback', async function (request, reply) {
 
   console.log(result.access_token)
 
-  reply.send({ access_token: result.access_token })
+  // reply.send({ access_token: result.access_token })
+  request.session.set('github_access_token', result.access_token)
+  const token = request.session.get('github_access_token')
+  console.log('Set token: ', token)
+  reply.send('session set')
+})
+
+fastify.get('/logout', (request, reply) => {
+  request.session.delete()
+  reply.send('logged out')
+})
+
+fastify.get('/show-auth', (request, reply) => {
+  const token = request.session.get('github_access_token') 
+  console.log('Get token: ', token)
+  reply.send({ github_access_token: token })
 })
 
 fastify.listen(13023, (err, address) => {
