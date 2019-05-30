@@ -43,7 +43,11 @@ const mainTemplate = ({
     )
   }
   const previewUrl = getUrl()
-  const disabledBtn = !previewUrl || !ipfsCid || publishJob
+  /*
+  const disabledBtn = !previewUrl || !ipfsCid ||
+    (publishJob && (!jobStatus || jobStatus.state !== 'DONE'))
+  */
+  const disabledBtn = false
 
   let status = null
   if (publishJob) {
@@ -159,7 +163,7 @@ async function pollStatus (jobId) {
     }
     jobStatus = await res.json()
     r()
-    if (jobStatus.done || jobStatus.error) {
+    if (jobStatus.state === 'DONE' || jobStatus.error) {
       break
     }
     await delay(1000)

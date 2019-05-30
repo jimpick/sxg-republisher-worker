@@ -135,6 +135,9 @@ fastify.post('/publishJobs', publishJobsOpts, async function (request, reply) {
   if (!user) {
     return reply.code(403).send({ error: 'Not logged in' })
   }
+  if (!signer.ready) {
+    return reply.code(503).send({ error: 'Not ready yet' })
+  }
   const { login } = user
   const { siteName, ipfsCid } = request.body
   console.log('new publishJob:', login, siteName, ipfsCid, request.body)
@@ -147,11 +150,9 @@ fastify.post('/publishJobs', publishJobsOpts, async function (request, reply) {
   }
   jobs.set(jobId, job)
   reply.code(201).send(job)
-  for (let i = 0; i <= 10; i++) {
-    job.counter = i
-    await delay(1000)
-  }
-  job.done = true
+  await signer.generateSignedExchanges(job)
+  // FIXME: Set DNS records
+  job.state = 'DONE'
 })
 
 fastify.get('/publishJobs/:jobId', async function (request, reply) {
