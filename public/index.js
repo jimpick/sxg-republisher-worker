@@ -1,6 +1,13 @@
 import { html, render } from 'https://unpkg.com/lit-html?module'
 
-const mainTemplate = ({ siteName, ipfsCid, user, error }) => {
+const mainTemplate = ({
+  siteName,
+  ipfsCid,
+  user,
+  error,
+  publishJob,
+  jobStatus
+}) => {
   const header = html`
     <h1>SXG IPFS Publisher Demo</h1>
   `
@@ -36,13 +43,21 @@ const mainTemplate = ({ siteName, ipfsCid, user, error }) => {
     )
   }
   const previewUrl = getUrl()
-  const disabled = !previewUrl || !ipfsCid
+  const disabledBtn = !previewUrl || !ipfsCid || publishJob
 
+  let status = null
+  if (publishJob) {
+    status = html`
+      <pre>${JSON.stringify(publishJob, null, 2)}</pre>
+      <pre>${jobStatus && JSON.stringify(jobStatus, null, 2)}</pre>
+    `
+  }
   return html`
     ${header}
     <p>Hello ${user.login}</p>
     <div>
       <img class="avatar" src="${user.avatar_url}">
+      <button @click=${logout}>Logout</button>
     </div>
     <h3>Publish a new site</h3>
     <div>
@@ -51,7 +66,7 @@ const mainTemplate = ({ siteName, ipfsCid, user, error }) => {
         type="text"
         id="siteName"
         size="40"
-        @input=${input}
+        @input=${inputText}
         autocomplete="off"
         autocorrect="off"
         autocapitalize="off"
@@ -63,7 +78,7 @@ const mainTemplate = ({ siteName, ipfsCid, user, error }) => {
         type="text"
         id="ipfsCid"
         size="80"
-        @input=${input}
+        @input=${inputText}
         autocomplete="off"
         autocorrect="off"
         autocapitalize="off"
@@ -71,40 +86,84 @@ const mainTemplate = ({ siteName, ipfsCid, user, error }) => {
       <br>
       <div id="preview">${previewUrl}</div>
       <br>
-      <button ?disabled=${disabled} @click=${publish}>
+      <button ?disabled=${disabledBtn} @click=${publish}>
         Publish
       </button>
+      ${status}
     </div>
-    <ul>
-      <li><a href="/do-work">Do work</a></li>
-    </ul>
-    <button @click=${logout}>Logout</button>
   `
 
-  function publish (e) {
-    console.log('Publish')
-    e.preventDefault()
-  }
 }
 
 let user
 let error
 let siteName
 let ipfsCid
+let publishJob
+let jobStatus
 
 function r () {
   render(mainTemplate({
     user,
     error,
     siteName,
-    ipfsCid
+    ipfsCid,
+    publishJob,
+    jobStatus
   }), document.body)
 }
 
-function input () {
+function inputText () {
   siteName = document.getElementById('siteName').value
   ipfsCid = document.getElementById('ipfsCid').value
   r()
+}
+
+async function publish (e) {
+  console.log('Publish')
+  e.preventDefault()
+  try {
+    const res = await fetch('/publishJobs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        siteName,
+        ipfsCid
+      })
+    })
+    publishJob = await res.json()
+    r()
+    if (res.status === 201) {
+      pollStatus(publishJob.jobId)
+    }
+  } catch (e) {
+    console.error('Error publishing job', e)
+    error = 'Error publishing job'
+    r()
+  }
+}
+
+function delay (interval) {
+  return new Promise(resolve =>  setTimeout(resolve, interval))
+}
+
+async function pollStatus (jobId) {
+  for (let i = 0; i < 2 * 60 * 60; i++) { // 2 minute timeout
+    const res = await fetch(`/publishJobs/${jobId}`)
+    if (res.status !== 200) {
+      jobStatus = {
+        error: res.statusText
+      }
+      r()
+      break
+    }
+    jobStatus = await res.json()
+    r()
+    if (jobStatus.done || jobStatus.error) {
+      break
+    }
+    await delay(1000)
+  }
 }
 
 async function logout () {

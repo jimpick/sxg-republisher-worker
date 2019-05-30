@@ -1,5 +1,6 @@
 const path = require('path')
 const { Readable } = require('stream')
+const { randomBytes } = require('crypto')
 const AWS = require('aws-sdk')
 const delay = require('delay')
 const Octokit = require('@octokit/rest')
@@ -97,6 +98,7 @@ fastify.get('/show-auth', async function (request, reply) {
 })
 */
 
+/*
 fastify.get('/do-work', function (request, reply) {
   const stream = new Readable({ read() {} })
   reply.type('text/html; charset=UTF-8').send(stream)
@@ -110,6 +112,54 @@ fastify.get('/do-work', function (request, reply) {
     stream.push('Done.\n')
     stream.push(null)
   }
+})
+*/
+
+const jobs = new Map()
+
+const publishJobsOpts = {
+  schema: {
+    body: {
+      type: 'object',
+      required: [ 'siteName', 'ipfsCid' ],
+      properties: {
+        siteName: { type: 'string' },
+        ipfsCid: { type: 'string' }
+      }
+    }
+  }
+}
+
+fastify.post('/publishJobs', publishJobsOpts, async function (request, reply) {
+  const user = request.session.get('github_user')
+  if (!user) {
+    return reply.code(403).send({ error: 'Not logged in' })
+  }
+  const { login } = user
+  const { siteName, ipfsCid } = request.body
+  console.log('new publishJob:', login, siteName, ipfsCid, request.body)
+  const jobId = randomBytes(8).toString('hex')
+  const job = {
+    jobId,
+    login,
+    siteName,
+    ipfsCid
+  }
+  jobs.set(jobId, job)
+  reply.code(201).send(job)
+  for (let i = 0; i <= 10; i++) {
+    job.counter = i
+    await delay(1000)
+  }
+  job.done = true
+})
+
+fastify.get('/publishJobs/:jobId', async function (request, reply) {
+  const user = request.session.get('github_user')
+  if (!user) {
+    return reply.code(403).send({ error: 'Not logged in' })
+  }
+  reply.send(jobs.get(request.params.jobId))
 })
 
 const port = process.env.PORT || 13023
