@@ -21,7 +21,8 @@
     "fastify-oauth2": "^2.0.0",
     "fastify-secure-session": "^1.1.1",
     "fastify-static": "^2.4.0",
-    "ipfs-http-client": "^32.0.1"
+    "ipfs-http-client": "^32.0.1",
+    "rimraf": "^2.6.3"
   },
   "devDependencies": {
     "nodemon": "^1.19.1"
