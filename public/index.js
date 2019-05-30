@@ -1,6 +1,6 @@
 import { html, render } from 'https://unpkg.com/lit-html?module'
 
-const mainTemplate = ({ user, error }) => {
+const mainTemplate = ({ siteName, ipfsCid, user, error }) => {
   const header = html`
     <h1>SXG IPFS Publisher Demo</h1>
   `
@@ -26,11 +26,54 @@ const mainTemplate = ({ user, error }) => {
       location.href = '/login'
     }
   }
+
+  function getUrl () {
+    if (!siteName || !user.login) return ''
+    return (
+      `${siteName.trim()}-${user.login}.ipfs.v6z.me`
+      .replace(/ /g, '-')
+      .toLowerCase()
+    )
+  }
+  const previewUrl = getUrl()
+  const disabled = !previewUrl || !ipfsCid
+
   return html`
     ${header}
     <p>Hello ${user.login}</p>
     <div>
       <img class="avatar" src="${user.avatar_url}">
+    </div>
+    <h3>Publish a new site</h3>
+    <div>
+      <label for="siteName">Site name:</label>
+      <input
+        type="text"
+        id="siteName"
+        size="40"
+        @input=${input}
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false">
+      <br>
+
+      <label for="ipfsCid">IPFS CID:</label>
+      <input
+        type="text"
+        id="ipfsCid"
+        size="80"
+        @input=${input}
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false">
+      <br>
+      <div id="preview">${previewUrl}</div>
+      <br>
+      <button ?disabled=${disabled} @click=${publish}>
+        Publish
+      </button>
     </div>
     <ul>
       <li><a href="/do-work">Do work</a></li>
@@ -38,13 +81,30 @@ const mainTemplate = ({ user, error }) => {
     <button @click=${logout}>Logout</button>
   `
 
+  function publish (e) {
+    console.log('Publish')
+    e.preventDefault()
+  }
 }
 
 let user
 let error
+let siteName
+let ipfsCid
 
 function r () {
-  render(mainTemplate({ user }), document.body)
+  render(mainTemplate({
+    user,
+    error,
+    siteName,
+    ipfsCid
+  }), document.body)
+}
+
+function input () {
+  siteName = document.getElementById('siteName').value
+  ipfsCid = document.getElementById('ipfsCid').value
+  r()
 }
 
 async function logout () {
