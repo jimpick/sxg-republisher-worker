@@ -8,6 +8,8 @@ const rimraf = require('rimraf')
 
 const mkdir = promisify(fs.mkdir)
 const writeFile = promisify(fs.writeFile)
+const readdir = promisify(fs.readdir)
+const stat = promisify(fs.stat)
 
 const { IPFS_API_USER: user, IPFS_API_PASSWORD: password } = process.env
 const userPassword = Buffer.from(`${user}:${password}`).toString('base64')
@@ -81,15 +83,12 @@ async function run () {
 }
 run()
 
-async function generateSignedExchanges (job) {
-  if (!ready) throw new Error('Not ready')
+async function download (job) {
   const { ipfsCid, jobId } = job
   job.state = 'DOWNLOADING_FROM_IPFS'
   const jobsDir = path.resolve(__dirname, 'jobs', jobId)
   const downloadDir = path.join(jobsDir, 'download')
   await mkdir(downloadDir, { recursive: true })
-  const signedDir = path.join(jobsDir, 'signed')
-  await mkdir(signedDir, { recursive: true })
 
   const files = await ipfs.get(ipfsCid)
   const filesToDownload = []
@@ -119,6 +118,37 @@ async function generateSignedExchanges (job) {
   */
 
   job.state = 'DONE_DOWNLOADING'
+}
+
+async function sign (job) {
+  const { jobId } = job
+  job.state = 'GENERATING_SXGS'
+  const jobsDir = path.resolve(__dirname, 'jobs', jobId)
+  const downloadDir = path.join(jobsDir, 'download')
+  const signedDir = path.join(jobsDir, 'signed')
+  await mkdir(signedDir, { recursive: true })
+  walk('.')
+  job.state = 'GENERATED_SXGS'
+
+  async function walk (dir) {
+    const files = await readdir(path.join(downloadDir, dir))
+    // console.log('Dir', dir, files)
+    for (const file of files) {
+      const resolved = path.resolve(downloadDir, dir, file)
+      const stats = await stat(resolved)
+      if (stats.isDirectory()) {
+        await walk(path.join(dir, file))
+      } else {
+        console.log('File', dir, file)
+      }
+    }
+  }
+}
+
+async function generateSignedExchanges (job) {
+  if (!ready) throw new Error('Not ready')
+  await download(job)
+  await sign(job)
 }
 
 module.exports = {
