@@ -98,16 +98,17 @@ async function download (job) {
       filesToDownload.push(file)
     }
   }
-  job.download = {
+  job.detail = {
     numFiles: filesToDownload.length,
-    downloaded: 0
+    downloaded: 0,
+    signed: 0
   }
   for (const file of filesToDownload) {
     const filePath = file.path.replace(/^[^/]+\//, '')
     const dest = path.join(downloadDir, filePath)
     await mkdir(path.dirname(dest), { recursive: true })
     await writeFile(dest, file.content)
-    job.download.downloaded++
+    job.detail.downloaded++
   }
 
   /*
@@ -129,7 +130,7 @@ async function sign (job) {
   const signedDir = path.join(jobsDir, 'signed')
   await mkdir(signedDir, { recursive: true })
   await walk('.')
-  job.state = 'GENERATED_SXGS'
+  job.state = 'DONE_GENERATING_SXGS'
 
   async function walk (dir) {
     const files = await readdir(path.join(downloadDir, dir))
@@ -145,6 +146,7 @@ async function sign (job) {
         const signedFileDir = path.dirname(path.join(signedDir, filePath))
         await mkdir(signedFileDir, { recursive: true })
         await generateSxg()
+        job.detail.signed++
 
         function generateSxg () {
           return new Promise((resolve, reject) => {
@@ -185,6 +187,19 @@ async function sign (job) {
   }
 }
 
+async function upload (job) {
+  const { ipfsCid, jobId } = job
+  job.state = 'UPLOADING_TO_IPFS'
+  const jobsDir = path.resolve(__dirname, 'jobs', jobId)
+  const signedDir = path.join(jobsDir, 'signed')
+
+  const results = await ipfs.addFromFs(signedDir, { recursive: true })
+  console.log('results', JSON.stringify(results, null, 2))
+  job.sxgCid = results[results.length - 1].hash
+  job.state = 'DONE_UPLOADING'
+}
+
+
 async function generateSignedExchanges (job) {
   if (!ready) throw new Error('Not ready')
   const { jobId } = job
@@ -195,6 +210,8 @@ async function generateSignedExchanges (job) {
   console.log('Job downloaded', jobId, elapsed1)
   await sign(job)
   const elapsed2 = `${Math.floor((Date.now() - startTime) / 1000)}s`
+  await upload(job)
+  const elapsed3 = `${Math.floor((Date.now() - startTime) / 1000)}s`
   console.log('Job end', jobId, elapsed2)
 }
 
