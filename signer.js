@@ -6,6 +6,7 @@ const { Readable } = require('stream')
 const ipfsClient = require('ipfs-http-client')
 const rimraf = require('rimraf')
 const config = require('./config')
+const upsertDnsRecords = require('./publish-dnslink')
 
 const mkdir = promisify(fs.mkdir)
 const writeFile = promisify(fs.writeFile)
@@ -193,9 +194,17 @@ async function upload (job) {
   const jobsDir = path.resolve(__dirname, 'jobs', jobId)
   const signedDir = path.join(jobsDir, 'signed')
 
+  console.log('Uploading dir', signedDir)
   const results = await ipfs.addFromFs(signedDir, { recursive: true })
-  console.log('results', JSON.stringify(results, null, 2))
-  job.sxgCid = results[results.length - 1].hash
+  if (results.length === 0) {
+    throw new Error('Upload returned no results')
+  }
+  const finalResult = results[results.length - 1]
+  if (finalResult.path !== 'signed') {
+    throw new Error('Upload returned partial results')
+  }
+  console.log('Upload finished', results.length, finalResult)
+  job.sxgCid = finalResult.hash
   job.state = 'DONE_UPLOADING'
 }
 
@@ -210,9 +219,13 @@ async function generateSignedExchanges (job) {
   console.log('Job downloaded', jobId, elapsed1)
   await sign(job)
   const elapsed2 = `${Math.floor((Date.now() - startTime) / 1000)}s`
+  console.log('Job signed', jobId, elapsed2)
   await upload(job)
   const elapsed3 = `${Math.floor((Date.now() - startTime) / 1000)}s`
-  console.log('Job end', jobId, elapsed2)
+  console.log('Job uploaded', jobId, elapsed3)
+  await upsertDnsRecords(job)
+  const elapsed4 = `${Math.floor((Date.now() - startTime) / 1000)}s`
+  console.log('Job end', jobId, elapsed4)
 }
 
 module.exports = {

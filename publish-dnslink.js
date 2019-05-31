@@ -4,37 +4,9 @@ const delay = require('delay')
 
 require('dotenv').config()
 
-const user = 'jimpick'
-
-/*
-const siteName = 'index'
-const cid = 'QmaESbPUk9ifYSiTgjXizp4DahbfpFGKKFyj5WGDuJyG8W'
-const sxgCid = 'QmbjzfWagtGAeNeiM1msmxhLK5oEgY7VHLsNfQiwKmufxx'
-*/
-
-/*
-const siteName = 'ipfs-docs'
-const cid = 'QmQnTyd54imxXb9oC49ujk7HnJJt9dfctmRhUxz1XoM3om'
-const sxgCid = 'Qmct2SvuWTjmUsSP3djgCNDafDnMRTJxQ6qef1R8LwYAos'
-*/
-
-const siteName = 'ipfs-docs-2'
-const cid = 'QmQnTyd54imxXb9oC49ujk7HnJJt9dfctmRhUxz1XoM3om'
-const sxgCid = 'QmTVnN6gZpRs9XLvrRXoZRBkvBwNhMY6JS3qQ9zhi51TZ8'
-
-/*
-const siteName = 'ipld'
-const cid = 'QmXb2bKQdgNhC7vaiKQgXFtt7daUZD382L54UTTNXnwQTD'
-const sxgCid = 'Qme6j9Q2w74U9JqYHPMyge54jJc6ffM8P3uG8ZtTcsLeAk'
-*/
-
-/*
-const siteName = 'peerpad'
-const cid = 'QmWbsqqqG9YpNYDt5afp6HY8TrKMtCtdGUtUfgkS9fRYeH'
-const sxgCid = 'QmXqRHSzn4moGLu831DXLaoVHyeY5BE9FP1fL939yrVfsp'
-*/
-
-async function run () {
+async function upsertDnsRecords (job) {
+  const { jobId, login, siteName, ipfsCid: cid, sxgCid } = job
+  job.state = 'UPSERTING_DNS_RECORDS'
   const route53 = new AWS.Route53({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
@@ -58,7 +30,7 @@ async function run () {
         {
           Action: 'UPSERT',
           ResourceRecordSet: {
-            Name: `${siteName}-${user}.ipfs.v6z.me.`,
+            Name: `${siteName}-${login}.ipfs.v6z.me.`,
             Type: 'A',
             TTL: 60,
             ResourceRecords: [
@@ -71,7 +43,7 @@ async function run () {
         {
           Action: 'UPSERT',
           ResourceRecordSet: {
-            Name: `_dnslink.${siteName}-${user}.ipfs.v6z.me.`,
+            Name: `_dnslink.${siteName}-${login}.ipfs.v6z.me.`,
             Type: 'TXT',
             TTL: 60,
             ResourceRecords: [
@@ -84,7 +56,7 @@ async function run () {
         {
           Action: 'UPSERT',
           ResourceRecordSet: {
-            Name: `sxg.${siteName}-${user}.ipfs.v6z.me.`,
+            Name: `sxg.${siteName}-${login}.ipfs.v6z.me.`,
             Type: 'A',
             TTL: 60,
             ResourceRecords: [
@@ -97,7 +69,7 @@ async function run () {
         {
           Action: 'UPSERT',
           ResourceRecordSet: {
-            Name: `_dnslink.sxg.${siteName}-${user}.ipfs.v6z.me.`,
+            Name: `_dnslink.sxg.${siteName}-${login}.ipfs.v6z.me.`,
             Type: 'TXT',
             TTL: 60,
             ResourceRecords: [
@@ -116,14 +88,15 @@ async function run () {
   while (true) {
     const change = (await route53.getChange({ Id: upsertId }).promise())
       .ChangeInfo
-    console.log(
-      `${Math.floor((Date.now() - startTime) / 1000)}s`,
+    const status = `${Math.floor((Date.now() - startTime) / 1000)}s ` +
       change.Status
-    )
+    console.log(status)
+    job.detail.route53 = status
     if (change.Status !== 'PENDING') break
     await delay(1000)
   }
+  job.state = 'DONE_DNS_RECORDS'
 }
 
-run()
+module.exports = upsertDnsRecords
 
