@@ -123,7 +123,7 @@ async function download (job) {
 }
 
 async function sign (job) {
-  const { jobId, siteName } = job
+  const { jobId, siteName, login } = job
   job.state = 'GENERATING_SXGS'
   const jobsDir = path.resolve(__dirname, 'jobs', jobId)
   const downloadDir = path.join(jobsDir, 'download')
@@ -151,7 +151,7 @@ async function sign (job) {
         function generateSxg () {
           return new Promise((resolve, reject) => {
             const { dnsRoot } = config
-            const origin = `https://${siteName}.${dnsRoot}`
+            const origin = `https://${siteName}-${login}.${dnsRoot}`
             const genSignedExchange = spawn(
               'gen-signedexchange',
               [

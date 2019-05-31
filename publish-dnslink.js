@@ -18,15 +18,21 @@ const cid = 'QmQnTyd54imxXb9oC49ujk7HnJJt9dfctmRhUxz1XoM3om'
 const sxgCid = 'Qmct2SvuWTjmUsSP3djgCNDafDnMRTJxQ6qef1R8LwYAos'
 */
 
+const siteName = 'ipfs-docs-2'
+const cid = 'QmQnTyd54imxXb9oC49ujk7HnJJt9dfctmRhUxz1XoM3om'
+const sxgCid = 'QmTVnN6gZpRs9XLvrRXoZRBkvBwNhMY6JS3qQ9zhi51TZ8'
+
 /*
 const siteName = 'ipld'
 const cid = 'QmXb2bKQdgNhC7vaiKQgXFtt7daUZD382L54UTTNXnwQTD'
 const sxgCid = 'Qme6j9Q2w74U9JqYHPMyge54jJc6ffM8P3uG8ZtTcsLeAk'
 */
 
+/*
 const siteName = 'peerpad'
 const cid = 'QmWbsqqqG9YpNYDt5afp6HY8TrKMtCtdGUtUfgkS9fRYeH'
 const sxgCid = 'QmXqRHSzn4moGLu831DXLaoVHyeY5BE9FP1fL939yrVfsp'
+*/
 
 async function run () {
   const route53 = new AWS.Route53({
