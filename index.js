@@ -10,7 +10,8 @@ require('dotenv').config()
 
 const origin = process.env.ORIGIN ? process.env.ORIGIN :
   'http://localhost:13023'
-const fastify = require('fastify')({ logger: true })
+// const fastify = require('fastify')({ logger: true })
+const fastify = require('fastify')()
 
 fastify.register(require('fastify-static'), {
   root: path.join(__dirname, 'public')
@@ -150,7 +151,12 @@ fastify.post('/publishJobs', publishJobsOpts, async function (request, reply) {
   }
   jobs.set(jobId, job)
   reply.code(201).send(job)
-  await signer.generateSignedExchanges(job)
+  try {
+    await signer.generateSignedExchanges(job)
+  } catch (e) {
+    console.error('publishJob Error', e)
+    job.error = 'Error while publishing'
+  }
   // FIXME: Set DNS records
   job.state = 'DONE'
 })

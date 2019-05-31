@@ -5,6 +5,7 @@ const { spawn } = require('child_process')
 const { Readable } = require('stream')
 const ipfsClient = require('ipfs-http-client')
 const rimraf = require('rimraf')
+const config = require('./config')
 
 const mkdir = promisify(fs.mkdir)
 const writeFile = promisify(fs.writeFile)
@@ -121,13 +122,13 @@ async function download (job) {
 }
 
 async function sign (job) {
-  const { jobId } = job
+  const { jobId, siteName } = job
   job.state = 'GENERATING_SXGS'
   const jobsDir = path.resolve(__dirname, 'jobs', jobId)
   const downloadDir = path.join(jobsDir, 'download')
   const signedDir = path.join(jobsDir, 'signed')
   await mkdir(signedDir, { recursive: true })
-  walk('.')
+  await walk('.')
   job.state = 'GENERATED_SXGS'
 
   async function walk (dir) {
@@ -139,7 +140,46 @@ async function sign (job) {
       if (stats.isDirectory()) {
         await walk(path.join(dir, file))
       } else {
-        console.log('File', dir, file)
+        const filePath = path.join(dir, file)
+        // console.log('Signing', filePath)
+        const signedFileDir = path.dirname(path.join(signedDir, filePath))
+        await mkdir(signedFileDir, { recursive: true })
+        await generateSxg()
+
+        function generateSxg () {
+          return new Promise((resolve, reject) => {
+            const { dnsRoot } = config
+            const origin = `https://${siteName}.${dnsRoot}`
+            const genSignedExchange = spawn(
+              'gen-signedexchange',
+              [
+                '-uri', `${origin}/${filePath}`,
+                '-content', path.join(downloadDir, filePath),
+                '-certificate', 'certs/cert.pem',
+                '-privateKey', 'certs/priv.key',
+                '-certUrl', cborUrl,
+                '-validityUrl', `${origin}/resource.validity.msg`,
+                '-responseHeader', 'Content-Type: text/html; charset=utf-8',
+                '-expire', '168h0m0s',
+                '-o', path.join(signedDir, `${filePath}.sxg`)
+              ],
+              {
+                stdio: ['pipe', process.stdout, process.stderr]
+              }
+            )
+            genSignedExchange.on('error', error => {
+              console.error('Spawn error', error)
+              reject(new Error('gen-signedexchange failed'))
+            })
+            genSignedExchange.on('close', (code) => {
+              if (code) {
+                console.error(`gen-signedexchange exited with code ${code}`)
+                return reject(new Error('gen-signedexchange failed'))
+              }
+              resolve()
+            })
+          })
+        }
       }
     }
   }
@@ -147,8 +187,15 @@ async function sign (job) {
 
 async function generateSignedExchanges (job) {
   if (!ready) throw new Error('Not ready')
+  const { jobId } = job
+  const startTime = Date.now()
+  console.log('Job start', jobId, job)
   await download(job)
+  const elapsed1 = `${Math.floor((Date.now() - startTime) / 1000)}s`
+  console.log('Job downloaded', jobId, elapsed1)
   await sign(job)
+  const elapsed2 = `${Math.floor((Date.now() - startTime) / 1000)}s`
+  console.log('Job end', jobId, elapsed2)
 }
 
 module.exports = {
