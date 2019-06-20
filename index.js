@@ -46,11 +46,6 @@ fastify.register(require('fastify-secure-session'), {
   }
 })
 
-fastify.post('/api/publish', function (req, reply) {
-  console.log('Publish request:', req.body)
-  reply.send({ success: true })
-})
-
 fastify.get('/login/github/callback', async function (request, reply) {
   const result = await this.getAccessTokenFromAuthorizationCodeFlow(request)
   const auth = result.access_token
@@ -157,7 +152,6 @@ fastify.post('/publishJobs', publishJobsOpts, async function (request, reply) {
     console.error('publishJob Error', e)
     job.error = 'Error while publishing'
   }
-  // FIXME: Set DNS records
   job.state = 'DONE'
 })
 

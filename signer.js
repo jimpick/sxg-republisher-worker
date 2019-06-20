@@ -102,7 +102,8 @@ async function download (job) {
   job.detail = {
     numFiles: filesToDownload.length,
     downloaded: 0,
-    signed: 0
+    signed: 0,
+    uploaded: 0
   }
   for (const file of filesToDownload) {
     const filePath = file.path.replace(/^[^/]+\//, '')
@@ -194,20 +195,37 @@ async function upload (job) {
   const jobsDir = path.resolve(__dirname, 'jobs', jobId)
   const signedDir = path.join(jobsDir, 'signed')
 
+  const mfsDir = `/sxg-publisher/upload-${jobId}`
   console.log('Uploading dir', signedDir)
-  const results = await ipfs.addFromFs(signedDir, { recursive: true })
-  if (results.length === 0) {
-    throw new Error('Upload returned no results')
-  }
-  const finalResult = results[results.length - 1]
-  if (finalResult.path !== 'signed') {
-    throw new Error('Upload returned partial results')
-  }
-  console.log('Upload finished', results.length, finalResult)
-  job.sxgCid = finalResult.hash
+  await walk('.')
+  console.log('Upload finished')
+  const mfsStats = await ipfs.files.stat(mfsDir)
+  job.sxgCid = mfsStats.hash
   job.state = 'DONE_UPLOADING'
-}
 
+  async function walk (dir) {
+    const files = await readdir(path.join(signedDir, dir))
+    // console.log('Dir', dir, files)
+    for (const file of files) {
+      const resolved = path.resolve(signedDir, dir, file)
+      const stats = await stat(resolved)
+      if (stats.isDirectory()) {
+        await walk(path.join(dir, file))
+      } else {
+        const filePath = path.join(dir, file)
+        // console.log('Adding file', filePath)
+        const data = fs.readFileSync(path.join(signedDir, dir, file))
+        await ipfs.files.write(
+          path.join(mfsDir, filePath),
+          data,
+          // fs.createReadStream(path.join(signedDir, dir, file)),
+          { create: true, parents: true }
+        )
+        job.detail.uploaded++
+      }
+    }
+  }
+}
 
 async function generateSignedExchanges (job) {
   if (!ready) throw new Error('Not ready')
