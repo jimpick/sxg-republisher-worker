@@ -5,6 +5,7 @@ const AWS = require('aws-sdk')
 const delay = require('delay')
 const Octokit = require('@octokit/rest')
 const signer = require('./signer')
+const queryDns = require('./query-dns')
 
 require('dotenv').config()
 
@@ -46,6 +47,10 @@ fastify.register(require('fastify-secure-session'), {
   }
 })
 
+fastify.get('/sites', function (request, reply) {
+  reply.sendFile('index.html')
+})
+
 fastify.get('/login/github/callback', async function (request, reply) {
   const result = await this.getAccessTokenFromAuthorizationCodeFlow(request)
   const auth = result.access_token
@@ -61,7 +66,7 @@ fastify.get('/login/github/callback', async function (request, reply) {
   reply.redirect('/')
 })
 
-fastify.get('/user', async function (request, reply) {
+fastify.get('/api/user', async function (request, reply) {
   const user = request.session.get('github_user')
   if (!user) {
     reply.send({ loggedOut: true })
@@ -70,7 +75,7 @@ fastify.get('/user', async function (request, reply) {
   reply.send(user)
 })
 
-fastify.post('/logout', async function (request, reply) {
+fastify.post('/api/logout', async function (request, reply) {
   /* Doesn't work
   const accessToken = this.githubOAuth.accessToken.create({
     access_token: request.session.get('github_access_token')
@@ -126,7 +131,7 @@ const publishJobsOpts = {
   }
 }
 
-fastify.post('/publishJobs', publishJobsOpts, async function (request, reply) {
+fastify.post('/api/publishJobs', publishJobsOpts, async function (request, reply) {
   const user = request.session.get('github_user')
   if (!user) {
     return reply.code(403).send({ error: 'Not logged in' })
@@ -155,12 +160,53 @@ fastify.post('/publishJobs', publishJobsOpts, async function (request, reply) {
   job.state = 'DONE'
 })
 
-fastify.get('/publishJobs/:jobId', async function (request, reply) {
+fastify.get('/api/publishJobs/:jobId', async function (request, reply) {
   const user = request.session.get('github_user')
   if (!user) {
     return reply.code(403).send({ error: 'Not logged in' })
   }
   reply.send(jobs.get(request.params.jobId))
+})
+
+fastify.get('/api/sites', async function (request, reply) {
+  try {
+    const dnsRecords = await queryDns()
+    const sites = []
+    for (const dnsRecord of dnsRecords) {
+      /*
+      {
+        "Name": "_dnslink.testing-jimpick.ipfs.v6z.me.",
+        "Type": "TXT",
+        "TTL": 60,
+        "ResourceRecords": [
+          {
+            "Value": "\"dnslink=/ipfs/QmWXNG39oqHZvaFoF1Stbq8pSJa3c345hV5pk66mytdYeK\""
+          }
+        ]
+      }
+      */
+      const { Name: url, ResourceRecords: resourceRecords } = dnsRecord
+      const nameMatch = url.match(/^_dnslink\.([^.]+)-([^-.]+)\.ipfs\.v6z\.me\.$/)
+      if (
+        nameMatch &&
+        resourceRecords &&
+        resourceRecords.length === 1
+      ) {
+        const value = resourceRecords[0].Value
+        const valueMatch = value.match(/"dnslink=\/ipfs\/(.*)"/)
+        if (valueMatch) {
+          sites.push({
+            name: nameMatch[1],
+            user: nameMatch[2],
+            cid: valueMatch[1]
+          })
+        }
+      }
+    }
+    reply.send(sites)
+  } catch (e) {
+    console.error('list sites Error', e)
+  }
 })
 
 const port = process.env.PORT || 13023

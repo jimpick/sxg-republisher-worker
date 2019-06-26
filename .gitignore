@@ -5,3 +5,4 @@ certs
 yarn-error.log
 *.swp
 jobs
+package-lock.json

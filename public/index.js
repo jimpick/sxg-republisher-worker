@@ -1,4 +1,5 @@
 import { html, render } from 'https://unpkg.com/lit-html?module'
+import sitesTemplate from './sites.js'
 
 const mainTemplate = ({
   siteName,
@@ -6,7 +7,8 @@ const mainTemplate = ({
   user,
   error,
   publishJob,
-  jobStatus
+  jobStatus,
+  sites
 }) => {
   const header = html`
     <h1>SXG IPFS Publisher Demo</h1>
@@ -17,6 +19,14 @@ const mainTemplate = ({
       <pre>Error: ${error}</pre>
     `
   }
+
+  if (location.pathname === '/sites') {
+    return html`
+      ${header}
+      ${sitesTemplate(sites)}
+    `
+  }
+
   if (!user) {
     return html`
       ${header}
@@ -63,6 +73,7 @@ const mainTemplate = ({
       <img class="avatar" src="${user.avatar_url}">
       <button @click=${logout}>Logout</button>
     </div>
+    <a href="/sites">All Sites</a>
     <h3>Publish a new site</h3>
     <div>
       <label for="siteName">Site name:</label>
@@ -105,6 +116,7 @@ let siteName
 let ipfsCid
 let publishJob
 let jobStatus
+let sites
 
 function r () {
   render(mainTemplate({
@@ -113,7 +125,8 @@ function r () {
     siteName,
     ipfsCid,
     publishJob,
-    jobStatus
+    jobStatus,
+    sites
   }), document.body)
 }
 
@@ -127,7 +140,7 @@ async function publish (e) {
   console.log('Publish')
   e.preventDefault()
   try {
-    const res = await fetch('/publishJobs', {
+    const res = await fetch('/api/publishJobs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -153,7 +166,7 @@ function delay (interval) {
 
 async function pollStatus (jobId) {
   for (let i = 0; i < 2 * 60 * 60; i++) { // 2 minute timeout
-    const res = await fetch(`/publishJobs/${jobId}`)
+    const res = await fetch(`/api/publishJobs/${jobId}`)
     if (res.status !== 200) {
       jobStatus = {
         error: res.statusText
@@ -173,7 +186,7 @@ async function pollStatus (jobId) {
 async function logout () {
   console.log('Logout')
   try {
-    const res = await fetch('/logout', { method: 'POST' })
+    const res = await fetch('/api/logout', { method: 'POST' })
     user = await res.json()
     r()
   } catch (e) {
@@ -186,7 +199,7 @@ async function logout () {
 async function run () {
   r()
   try {
-    const res = await fetch('/user')
+    const res = await fetch('/api/user')
     user = await res.json()
     r()
   } catch (e) {
@@ -194,55 +207,16 @@ async function run () {
     error = 'Error loading user'
     r()
   }
+  try {
+    const res = await fetch('/api/sites')
+    sites = await res.json()
+    r()
+  } catch (e) {
+    console.error('Error loading sites', e)
+    error = 'Error loading sites'
+    r()
+  }
 }
 
 run()
 
-
-/*
-const publishBtn = document.getElementById('publish')
-const userEle = document.getElementById('githubUser')
-const nameEle = document.getElementById('siteName')
-const cidEle = document.getElementById('ipfsCid')
-const previewEle = document.getElementById('preview')
-const resultEle = document.getElementById('result')
-
-function getUrl () {
-  if (!nameEle.value || !userEle.value) return ''
-  return (
-    `${nameEle.value.trim()}-${userEle.value}.ipfs.v6z.me`
-    .replace(/ /g, '-')
-    .toLowerCase()
-  )
-}
-
-function updatePreview () {
-  const url = getUrl()
-  previewEle.textContent = url
-  publishBtn.disabled = !url || !cidEle.value
-}
-
-userEle.addEventListener('change', updatePreview)
-nameEle.addEventListener('input', updatePreview)
-cidEle.addEventListener('input', updatePreview)
-
-publishBtn.addEventListener('click', async (e) => {
-  console.log('click')
-  e.preventDefault()
-  try {
-    const res = await fetch('/api/publish', {
-      method: 'POST',
-      body: JSON.stringify({
-        user: userEle.value,
-        name: nameEle.value,
-        ipfsCid: cidEle.value
-      })
-    })
-    const json = await res.json()
-    if (!json.success) throw new Error('Failed')
-    resultEle.textContent = 'Successfully published'
-  } catch (e) {
-    resultEle.textContent = 'Publish failed'
-  }
-})
-*/
